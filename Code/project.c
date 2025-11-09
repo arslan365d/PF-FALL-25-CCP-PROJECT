@@ -38,6 +38,7 @@ int main() {
     GetConsoleMode(hOut, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hOut, dwMode);
+    
     int option;
     struct User found;
     noOfUsers = loadUsers(users);   
@@ -70,7 +71,7 @@ void stripNewline(char *str) {
 }
 
 int createYourAccount() {
-    FILE *file = fopen("./users.txt", "a");
+    FILE *file = fopen("./users.txt", "a+");
     if (!file) {
         printf("Error opening file!\n");
         return 1;
@@ -104,8 +105,10 @@ int createYourAccount() {
 
     fclose(file);
 
+
     printf("\nAccount created successfully!\n");
-    printOptions(&user);
+    noOfUsers = loadUsers(users);
+    printOptions(&users[noOfUsers-1]);
 
     return 0;
 }
@@ -176,7 +179,7 @@ int loginYourAccount(struct User *u) {
 }
 
 char *reversePassword(char password[MAX_PASS]) {
-    char reversePass[MAX_PASS];
+    static char reversePass[MAX_PASS];
     int len = strlen(password);
     for (int i = 0; i < len; i++) {
         reversePass[i] = password[len - i - 1];
@@ -204,7 +207,7 @@ void printOptions(struct User *u) {
             fastCash(u);
             break;
         case 3:
-         cashWithdrawal(u);
+//         cashWithdrawal(u);
             break;
         case 4:
           //  deposit(u);
@@ -249,6 +252,7 @@ int fastCash(struct User *u) {
         u->balance -= amount;
         printf("\n Withdrawal Successful! New Balance: %d\n", u->balance);
         saveUsers(users, noOfUsers);
+        printf("%d",noOfUsers);
     } else {
         printf("Insufficient Balance.\n");
     }
@@ -276,6 +280,8 @@ int loadUsers(struct User users[]) {
         count++;
         if (count >= MAX_USERS) break;
     }
+    
+    printf("%d\n",count);
 
     fclose(fp);
     return count;
@@ -283,6 +289,7 @@ int loadUsers(struct User users[]) {
 
 // Save all users back to file
 void saveUsers(struct User users[], int count) {
+	printf("%d\n",count);
     FILE *fp = fopen("./users.txt", "w");
     if (!fp) {
         printf("Error: Could not open file for writing\n");
