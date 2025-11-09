@@ -382,3 +382,5 @@ int cashWithdrawal(struct User *u){
     printf("\nWithdrawal Successful! New Balance: %d\n", u->balance);
     return 0;
 }
+
+// c
