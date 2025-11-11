@@ -5,7 +5,6 @@
 #endif
 #include <time.h>
 
-
 #define MAX_NAME 30
 #define MAX_EMAIL 40
 #define MAX_PHONE 25
@@ -31,6 +30,8 @@ struct User users[MAX_USERS];
 int noOfUsers = 0;
 
 // Function prototypes
+int loadUsers(struct User users[]);
+void saveUsers(struct User users[], int count);
 int createYourAccount();
 int loginYourAccount();
 void stripNewline(char *str);
@@ -39,8 +40,6 @@ char *reversePassword(char password[MAX_PASS]);
 void printOptions(struct User *u);
 void balanceInquiry(struct User *u);
 int fastCash(struct User *u);
-int loadUsers(struct User users[]);
-void saveUsers(struct User users[], int count);
 int cashWithdrawal(struct User *u);
 void deposit(struct User *u);
 void askingForSlip(char type[20]);
@@ -49,12 +48,14 @@ void transactionSlip(int amount,int balance);
 
 int main() {
 //    Enable ANSI escape sequences in Windows console
+    #ifdef _WIN32
      HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
      DWORD dwMode = 0;
      GetConsoleMode(hOut, &dwMode);
      dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
      SetConsoleMode(hOut, dwMode);
-
+    #endif
+    
     int option;
     noOfUsers = loadUsers(users);   
 
@@ -92,7 +93,7 @@ int createYourAccount() {
 
     struct User user;
     
-    printf("Enter Name: ");
+    printf("\nEnter Name: ");
     fgets(user.name, sizeof(user.name), stdin);
     stripNewline(user.name);
 
@@ -135,7 +136,7 @@ int loginYourAccount() {
     char loginName[MAX_NAME];
     char loginPass[MAX_PASS];
 
-    printf("Enter your Name: ");
+    printf("\nEnter your Name: ");
     fgets(loginName, sizeof(loginName), stdin);
     stripNewline(loginName);
 
@@ -149,42 +150,27 @@ int loginYourAccount() {
         return 1;
     }
 
-    char line[200];
     int foundIndex = -1;
-
-    noOfUsers = 0;
-    while (fgets(line, sizeof(line), file)) {
-        if (sscanf(line, "%29[^|]|%39[^|]|%24[^|]|%31[^|]|%d|%d",
-                   users[noOfUsers].name,
-                   users[noOfUsers].email,
-                   users[noOfUsers].phone,
-                   users[noOfUsers].password,
-                   &users[noOfUsers].balance,
-                   &users[noOfUsers].isBlocked) == 6)
-        {
-            // decrypt stored password
-            xorCipher(users[noOfUsers].password);
-
-            if (strcmp(loginName, users[noOfUsers].name) == 0) {
-                if (users[noOfUsers].isBlocked == 1) {
+    
+        for(int i=0;i<noOfUsers;i++){
+            if (strcmp(loginName, users[i].name) == 0) {
+                if (users[i].isBlocked == 1) {
                 	 printf("\n\033[31mYour Account is Blocked. Please Visit our Branch.\033[0m\n");
                     fclose(file);
                     return 0;
                 }
 
-                if (strcmp(loginPass, users[noOfUsers].password) == 0) {
-                    foundIndex = noOfUsers;
-                } else if (strcmp(loginPass, reversePassword(users[noOfUsers].password)) == 0) {
+                if (strcmp(loginPass, users[i].password) == 0) {
+                    foundIndex = i;
+                } else if (strcmp(loginPass, reversePassword(users[i].password)) == 0) {
                      printf("\a\n\033[32mIncorrect password. Account Blocked!\033[0m\n");
-                    users[noOfUsers].isBlocked = 1;
-                    saveUsers(users, noOfUsers + 1);
+                    users[i].isBlocked = 1;
+                    saveUsers(users, noOfUsers);
                     fclose(file);
                     return 0;
                 }
             }
-            noOfUsers++;
         }
-    }
     fclose(file);
 
     if (foundIndex != -1) {
@@ -221,12 +207,12 @@ char *reversePassword(char password[MAX_PASS]) {
 // Display menu options
 void printOptions(struct User *u) {
     int transOption;
-    printf("\n\t\tPlease Select a Transaction\n\n");
-    printf("1 for BALANCE INQUIRY \t\t");
+    printf("\n\t\t\033[32mPlease Select a Transaction\033[0m\n\n");
+    printf("1 for ACCOUNT INQUIRY \t\t");
     printf("2 for FAST CASH\n");
     printf("3 for CASH WITHDRAWAL\t\t");
     printf("4 for DEPOSIT\n\n");
-    printf("Choose any Option: ");
+    printf(" Choose any Option: ");
     scanf("%d", &transOption);
 
     switch (transOption) {
@@ -243,14 +229,14 @@ void printOptions(struct User *u) {
             deposit(u);
             break;
         default:
-            printf("Please Select a Valid Operation!\n");
+            printf(" Please Select a Valid Operation!\n");
     }
 }
 
-// Display account balance
+// Display account related things
 void balanceInquiry(struct User *u) {
-    printf("\n----- ACCOUNT DETAILS -----\n");
-    printf("Account Type: %s \nName: %s\nEmail: %s\nPhone: %s\nBalance: %d\n", 
+    printf("\n ----- ACCOUNT DETAILS -----\n");
+    printf(" Name: %s\nEmail: %s\nPhone: %s\nBalance: %d\n", 
             u->name, u->email, u->phone, u->balance);
 }
 
@@ -264,7 +250,7 @@ int fastCash(struct User *u) {
     printf("3 for 5000 \t\t");
     printf("4 for 10000 \t\t");
     printf("5 for 15000\n\n");
-    printf("Choose any Option: ");
+    printf(" Choose any Option: ");
     scanf("%d", &option);
     
     askingForSlip("FAST CASH");
@@ -276,21 +262,20 @@ int fastCash(struct User *u) {
         case 4: amount = 10000; break;
         case 5: amount = 15000; break;
         default:
-            printf("Invalid Option!\n");
+            printf(" Invalid Option!\n");
             return 1;
     }
 
         if (u->balance >= amount) {
         u->balance -= amount;
-            printf("\033[32m Withdrawal Successful!\033[0m\n");
-        printf("\n");
+            printf("\n \033[32m Withdrawal Successful!\033[0m\n");
         if(wantedSlip.yesOrNo == 'y' || wantedSlip.yesOrNo == 'Y'){
         	transactionSlip(amount,u->balance);
 		}
         saveUsers(users, noOfUsers);
         
     } else {
-    	printf("\033[31m Insufficient Balance.\033[0m\n");
+    	printf(" \033[31m Insufficient Balance.\033[0m\n");
     }
    
 
@@ -300,13 +285,13 @@ int fastCash(struct User *u) {
 // Deposit money
 void deposit(struct User *u) {
     int amount;
-    printf("\nEnter amount to deposit: ");
+    printf("\n Enter amount to deposit: ");
     scanf("%d", &amount);
     
     askingForSlip("DEPOSIT");
 
     if (amount <= 0) {
-        printf("Invalid amount.\n");
+        printf(" Invalid amount.\n");
         return;
     }
 
@@ -322,8 +307,7 @@ void deposit(struct User *u) {
     }
 
     saveUsers(users, noOfUsers);
-    printf("\033[32mDeposit Successful!\033[0m\n");
-    printf("\n\n");
+    printf(" \033[32mDeposit Successful!\033[0m\n");
     if(wantedSlip.yesOrNo == 'y' || wantedSlip.yesOrNo == 'Y'){
         	transactionSlip(amount,u->balance);
 		}
@@ -333,7 +317,7 @@ void deposit(struct User *u) {
 int loadUsers(struct User users[]) {
     FILE *fp = fopen("./users.txt", "r");
     if (!fp) {
-        perror("No user file found.\n");
+        perror(" No user file found.\n");
         return 0;
     }
 
@@ -344,7 +328,7 @@ int loadUsers(struct User users[]) {
                   users[count].phone,
                   users[count].password,
                   &users[count].balance,
-                  &users[count].isBlocked) == 8)
+                  &users[count].isBlocked) == 6)
     {
         // decrypt password in memory
         xorCipher(users[count].password);
@@ -360,7 +344,7 @@ int loadUsers(struct User users[]) {
 void saveUsers(struct User users[], int count) {
     FILE *fp = fopen("./users.txt", "w");
     if (!fp) {
-        printf("Error: Could not open file for writing\n");
+        printf(" Error: Could not open file for writing\n");
         return;
     }
 
@@ -382,20 +366,20 @@ void saveUsers(struct User users[], int count) {
 }
 
 int cashWithdrawal(struct User *u){
-    int amount;
+    int amount=0;
 
-    printf("\nEnter amount to withdraw: ");
+    printf("\n Enter amount to withdraw: ");
     scanf("%d", &amount);
 
     askingForSlip("CASH WITHDRAWAL");
     
     if (amount <= 0) {
-        printf("Invalid amount.\n");
+        printf(" Invalid amount.\n");
         return 1;
     }
 
     if (u->balance < amount) {
-    	printf("\033[31m Insufficient balance.\033[0m\n");
+    	printf(" \033[31m Insufficient balance.\033[0m\n");
         return 1;
     }
 
@@ -410,14 +394,14 @@ int cashWithdrawal(struct User *u){
     }
 
     saveUsers(users, noOfUsers);
-    printf("\n\033[31mWithdrawal Successful!\033[0m\n");
+    printf(" \n\033[31mWithdrawal Successful!\033[0m\n");
     if(wantedSlip.yesOrNo == 'y' || wantedSlip.yesOrNo == 'Y'){
         	transactionSlip(amount,u->balance);
 		}
     return 0;
 }
 void askingForSlip(char type[20]){
-	printf("\nDo you want a receipt of Transaction('y' for Yes or 'n' for No): ");
+	printf("\n Do you want a receipt of Transaction?('y' for Yes or 'n' for No): ");
 	scanf(" %c",&wantedSlip.yesOrNo);
 	strcpy(wantedSlip.type ,type);
 }
@@ -427,7 +411,7 @@ void transactionSlip(int amount,int balance){
     time(&t);
     current_time = localtime(&t);
 
-    printf("\n\n\033[32m ATM TRANSACTION RECIEPT\033[0m\n\n");
+    printf("\n\n \033[32m ATM TRANSACTION RECIEPT\033[0m\n\n");
 	printf(" %s\n",wantedSlip.type);
 	printf(" AMOUNT   RS.%d\n",amount);
 	printf(" ATM ID   3587412\n");
@@ -435,4 +419,3 @@ void transactionSlip(int amount,int balance){
 	// Print the current date and time in a readable format
 	printf("\n\n\033[32m Current date and time: %s\033[0m\n",asctime(current_time));
 }
-
