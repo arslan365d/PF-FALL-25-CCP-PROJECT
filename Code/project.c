@@ -49,12 +49,14 @@ void transactionSlip(int amount,int balance);
 
 int main() {
 //    Enable ANSI escape sequences in Windows console
+    #ifdef _WIN32
      HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
      DWORD dwMode = 0;
      GetConsoleMode(hOut, &dwMode);
      dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
      SetConsoleMode(hOut, dwMode);
-
+    #endif
+    
     int option;
     noOfUsers = loadUsers(users);   
 
@@ -283,7 +285,6 @@ int fastCash(struct User *u) {
         if (u->balance >= amount) {
         u->balance -= amount;
             printf("\033[32m Withdrawal Successful!\033[0m\n");
-        printf("\n");
         if(wantedSlip.yesOrNo == 'y' || wantedSlip.yesOrNo == 'Y'){
         	transactionSlip(amount,u->balance);
 		}
@@ -323,7 +324,6 @@ void deposit(struct User *u) {
 
     saveUsers(users, noOfUsers);
     printf("\033[32mDeposit Successful!\033[0m\n");
-    printf("\n\n");
     if(wantedSlip.yesOrNo == 'y' || wantedSlip.yesOrNo == 'Y'){
         	transactionSlip(amount,u->balance);
 		}
@@ -344,7 +344,7 @@ int loadUsers(struct User users[]) {
                   users[count].phone,
                   users[count].password,
                   &users[count].balance,
-                  &users[count].isBlocked) == 8)
+                  &users[count].isBlocked) == 6)
     {
         // decrypt password in memory
         xorCipher(users[count].password);
@@ -382,7 +382,7 @@ void saveUsers(struct User users[], int count) {
 }
 
 int cashWithdrawal(struct User *u){
-    int amount;
+    int amount=0;
 
     printf("\nEnter amount to withdraw: ");
     scanf("%d", &amount);
@@ -435,4 +435,3 @@ void transactionSlip(int amount,int balance){
 	// Print the current date and time in a readable format
 	printf("\n\n\033[32m Current date and time: %s\033[0m\n",asctime(current_time));
 }
-
