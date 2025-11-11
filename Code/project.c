@@ -21,10 +21,12 @@ struct User {
     int isBlocked;
 };
 
+static char reversePass[MAX_PASS];
+
 struct Slip{
 	char yesOrNo;
 	char type[21];
-} wantedSlip;
+}wantedSlip;
 	
 struct User users[MAX_USERS];
 int noOfUsers = 0;
@@ -54,8 +56,14 @@ int main() {
      GetConsoleMode(hOut, &dwMode);
      dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
      SetConsoleMode(hOut, dwMode);
+<<<<<<< HEAD
+     int i;
+do{
+
+=======
     #endif
     
+>>>>>>> e2bfbd6169e3319381f482892b36316caa5dbac2
     int option;
     noOfUsers = loadUsers(users);   
 
@@ -78,8 +86,11 @@ int main() {
         default:
             printf("Please Enter Valid Option.\n");
     }
+}
 
-    return 0;
+    while(i=100);
+    i++;
+	return 0;
 }
 
 
@@ -109,7 +120,7 @@ int createYourAccount() {
     fgets(user.password, sizeof(user.password), stdin);
     stripNewline(user.password);
 
-    // Encrypting password before saving
+//     Encrypting password before saving
     xorCipher(user.password);
 
     printf("Enter the Money you want to Deposit: ");
